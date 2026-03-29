@@ -1,0 +1,47 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    margin: 0;
+    padding: 20px;
+}
+
+h2 {
+    margin-top: 30px;
+    color: #38bdf8;
+}
+
+#video {
+    display: block;
+    border-radius: 12px;
+    border: 2px solid #1e293b;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    margin-bottom: 20px;
+    max-width: 100%;
+}
+
+.metrics {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.card {
+    background: #1e293b;
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+    min-width: 120px;
+}
+
+.label {
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+.value {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 5px;
+    color: #22c55e;
+}

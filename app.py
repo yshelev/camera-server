@@ -12,7 +12,7 @@ def hls(filename):
 
 @app.route('/')
 def index():
-    return send_from_directory('../frontend', 'index.html')
+    return send_from_directory('templates', 'index.html')
 
 @app.route('/metrics', methods=['POST'])
 def metrics():
@@ -24,6 +24,5 @@ def metrics():
 @socketio.on('connect')
 def connect():
     print("client connected")
-
 if __name__ == "__main__":
     socketio.run(app, host="127.0.0.1", port=5001)
