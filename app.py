@@ -1,6 +1,8 @@
-from flask import Flask, request, send_from_directory, Response
+from flask import Flask, request, send_from_directory
 from flask_socketio import SocketIO
 from flask_cors import CORS
+import subprocess
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -24,5 +26,30 @@ def metrics():
 @socketio.on('connect')
 def connect():
     print("client connected")
+    
 if __name__ == "__main__":
+    os.makedirs("hls", exist_ok=True)
+    
+    command = [
+        'ffmpeg', 
+        '-rtsp_transport', 'tcp', 
+        '-i', 'rtsp://localhost:8554/stream', 
+        '-c:v', 'libx264', 
+        '-preset', 'veryfast', 
+        '-tune', 'zerolatency', 
+        '-f', 'hls', 
+        '-hls_time', '2', 
+        '-hls_list_size', '5', 
+        '-hls_flags', 'delete_segments', 
+        './hls/stream.m3u8'
+    ]
+    
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    
+
+    
     socketio.run(app, host="127.0.0.1", port=5001)

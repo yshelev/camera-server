@@ -13,13 +13,13 @@
 <h2>Метрики</h2>
 <div class="metrics">
     <div class="card">
-        <div class="label">People</div>
-        <div class="value" id="people">0</div>
+        <div class="label">Курицы</div>
+        <div class="value" id="chickens">0</div>
     </div>
 
     <div class="card">
-        <div class="label">FPS</div>
-        <div class="value" id="fps">0</div>
+        <div class="label">Выявленных аномалий поведения куриц</div>
+        <div class="value" id="anomalies">0</div>
     </div>
 </div>
 
@@ -37,8 +37,8 @@
     const socket = io("http://localhost:5001");
 
     socket.on('metrics', (data) => {
-        document.getElementById('people').innerText = data.people;
-        document.getElementById('fps').innerText = data.fps;
+        document.getElementById('chickens').innerText = data.chickens;
+        document.getElementById('anomalies').innerText = data.anomalies;
     });
 </script>
 
