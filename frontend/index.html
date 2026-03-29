@@ -18,16 +18,14 @@
 <script>
     // VIDEO
     const video = document.getElementById('video');
-    const src = "http://localhost:5000/hls/stream.m3u8";
+    const src = "http://localhost:5001/hls/stream.m3u8";
 
-    if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(src);
-        hls.attachMedia(video);
-    }
+    const hls = new Hls();
+    hls.loadSource(src);
+    hls.attachMedia(video);
 
     // METRICS
-    const socket = io("http://localhost:5000");
+    const socket = io("http://localhost:5001");
 
     socket.on('metrics', (data) => {
         document.getElementById('people').innerText = data.people;
