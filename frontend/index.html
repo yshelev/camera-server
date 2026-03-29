@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CV Dashboard</title>
+</head>
+<body>
+
+<h2>Видео</h2>
+<video id="video" controls autoplay width="640"></video>
+
+<h2>Метрики</h2>
+<div>People: <span id="people">0</span></div>
+<div>FPS: <span id="fps">0</span></div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+<script>
+    // VIDEO
+    const video = document.getElementById('video');
+    const src = "http://localhost:5000/hls/stream.m3u8";
+
+    if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(src);
+        hls.attachMedia(video);
+    }
+
+    // METRICS
+    const socket = io("http://localhost:5000");
+
+    socket.on('metrics', (data) => {
+        document.getElementById('people').innerText = data.people;
+        document.getElementById('fps').innerText = data.fps;
+    });
+</script>
+
+</body>
+</html>
