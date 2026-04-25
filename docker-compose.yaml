@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  setup:
+    build: .
+    container_name: setup-service
+    command: python setup.py
+    volumes:
+      - ./:/app
+    working_dir: /app
+    restart: "no"
+    networks:
+      - app-network
+
+  server:
+    build: .
+    container_name: server-service
+    command: python server.py
+    volumes:
+      - ./:/app
+    working_dir: /app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - setup
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

@@ -15,7 +15,7 @@ docker run --rm -it -e MTX_RTSPTRANSPORTS=tcp -e MTX_WEBRTCADDITIONALHOSTS=192.1
 ffmpeg -re -i sample.mp4 -c copy -f rtsp rtsp://localhost:8554/stream
 ```
 
-(для проверки можно использовать vlc media player, media -> url -> rtsp://localhost:8554/stream
+(для проверки можно использовать vlc media player, media -> url -> rtsp://localhost:8554/stream)
 
 # запуск
 

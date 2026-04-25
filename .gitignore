@@ -1,5 +1,7 @@
-.wsl_venv
-.venv
+.*venv
 .env
 .idea
 hls
+/service-environments
+*/__pycache__
+sample.mov

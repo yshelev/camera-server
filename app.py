@@ -26,6 +26,12 @@ def metrics():
 @socketio.on('connect')
 def connect():
     print("client connected")
+
+@app.route('/anomaly', methods=['POST'])
+def anomaly():
+    data = request.json
+    socketio.emit('anomaly', data)
+    return {"status": "ok"}
     
 if __name__ == "__main__":
     os.makedirs("hls", exist_ok=True)
