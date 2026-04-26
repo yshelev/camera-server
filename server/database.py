@@ -7,7 +7,7 @@ DATABASE_URL = os.getenv(
 
 engine = create_async_engine(DATABASE_URL, pool_pre_ping=True, echo=False)
 
-AsyncSessionLocal = async_sessionmaker(
+async_session = async_sessionmaker(
     engine,
     class_=AsyncSession,
     autocommit=False,
@@ -16,5 +16,5 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 async def get_db():
-    async with AsyncSessionLocal() as session:
+    async with async_session() as session:
         yield session

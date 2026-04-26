@@ -5,8 +5,6 @@ services:
       dockerfile: Dockerfile
     container_name: server
     command: python server.py
-    volumes:
-      - ./server:/app/server
     ports:
       - "8000:8000"
     environment:
@@ -47,7 +45,7 @@ services:
     volumes:
       - ./service:/app/service
     environment: 
-      - WORKER_ID=0
+      - WORKER_ID=1
       - VIDEO_URL=sample.mov
     depends_on: 
       - server

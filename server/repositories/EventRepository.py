@@ -1,15 +1,46 @@
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, delete, func
 from fastapi import HTTPException, status
 
 from models import Event
 from schemas import EventSchemaBase
 from models import Zone
+from datetime import datetime, timezone, timedelta
 
 class EventRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
+        
+    async def delete_hour_plus_events(self): 
+        one_hour_ago = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1)
+        
+        stmt = delete(Event).where(Event.timestamp < one_hour_ago)
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+        
+        return result.rowcount
+    
+    async def delete_events_by_zone(self, zone_id: int) -> int:
+        stmt = delete(Event).where(Event.zone_id == zone_id)
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+        return result.rowcount
+        
+    async def get_events_count_by_zone(self):
+        stmt = (
+            select(Zone, func.count(Event.id).label("event_count"))
+            .outerjoin(Event, Zone.id == Event.zone_id)  
+            .group_by(Zone.id)
+        )
+        
+        result = await self.db.execute(stmt)
+        zones_with_counts = result.all() 
+        
+        return [
+            {"zone": zone, "event_count": count}
+            for zone, count in zones_with_counts
+        ]
 
     async def create(self, data: EventSchemaBase, zone: Zone | None) -> Event:
         if not zone: 
