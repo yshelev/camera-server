@@ -10,10 +10,13 @@ from scipy.signal import butter, detrend, sosfiltfilt, welch
 from dotenv import load_dotenv
 import os
 import requests
+import time
 
 load_dotenv()
 WORKER_ID = os.getenv("WORKER_ID")
-SERVER_URL = "http://127.0.0.1:8080/update_data"
+SERVER_URL_BASE = "http://server:8000/"
+SERVER_URL_CREATE_EVENTS_ENDPOINT = "update_data"
+SERVER_URL_CREATE_ZONES_ENDPOINT = "create_zone"
 
 FLOW_SCALE = 0.5
 MOTION_THRESHOLD = 0.01
@@ -69,12 +72,33 @@ ECC_GAUSS_FILT_SIZE = 5
 ECC_MIN_BACKGROUND_RATIO = 0.05
 WINDOW_NAME = "Passive Breathing Debug"
 
+POST_REQUESTS_DELAY = .5
+
+def push_zones_to_server(): 
+    payload = {
+        "zones": [{
+            "zone_x": i, 
+            "zone_y": j, 
+            "worker_id": WORKER_ID
+        } for i in range(GRID_ROWS) for j in range(GRID_COLS)]
+    }
+    url = SERVER_URL_BASE + SERVER_URL_CREATE_ZONES_ENDPOINT
+    while True: 
+        try:
+            response = requests.post(
+                url, 
+                json=payload
+            )
+            time.sleep(POST_REQUESTS_DELAY)
+        except Exception as e: 
+            pass
+        finally: 
+            break
 
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Export breathing-style debug metrics for all passive 5%% zones to JSON."
     )
-    parser.add_argument("--video", required=True, help="Path to input video.")
     parser.add_argument(
         "--out",
         default="outputs/breathing_passive_debug",
@@ -535,13 +559,15 @@ def export_passive_breathing(args):
     out_base.parent.mkdir(parents=True, exist_ok=True)
     json_path = out_base.with_suffix(".json")
 
-    cap = cv2.VideoCapture(args.video)
+    VIDEO_URL = os.getenv("VIDEO_URL")
+    
+    cap = cv2.VideoCapture(VIDEO_URL)
     if not cap.isOpened():
-        raise RuntimeError(f"Could not open video: {args.video}")
+        raise RuntimeError(f"Could not open video: {VIDEO_URL}")
 
     ok, prev_frame = cap.read()
     if not ok:
-        raise RuntimeError(f"Could not read first frame: {args.video}")
+        raise RuntimeError(f"Could not read first frame: {VIDEO_URL}")
 
     prev_small = resize_frame(prev_frame, args.flow_scale)
     scale_x = prev_frame.shape[1] / prev_small.shape[1]
@@ -734,8 +760,9 @@ def export_passive_breathing(args):
                 "zones": zone_records,
             })
             try: 
+                url = SERVER_URL_BASE + SERVER_URL_CREATE_EVENTS_ENDPOINT
                 response = requests.post(
-                    SERVER_URL, 
+                    url, 
                     json=json_val
                 )
             except Exception as e: 
@@ -753,10 +780,6 @@ def export_passive_breathing(args):
                 current_fps,
                 time_sec,
             )
-            # cv2.imshow(WINDOW_NAME, debug_display)
-            # if cv2.waitKey(1) & 0xFF == ord("q"):
-            #     frame_count += 1
-            #     break
 
         prev_gray_enhanced = gray_aligned
         prev_stable_white_mask = stable_white_mask
@@ -764,7 +787,7 @@ def export_passive_breathing(args):
 
     payload = {
         "schema_version": "passive_breathing_debug.v1",
-        "video_source": args.video,
+        "video_source": VIDEO_URL,
         "fps": float(fps),
         "frame_size_original": [int(prev_frame.shape[1]), int(prev_frame.shape[0])],
         "frame_size_scaled": [int(prev_small.shape[1]), int(prev_small.shape[0])],
@@ -799,6 +822,7 @@ def export_passive_breathing(args):
 
 
 def main():
+    push_zones_to_server()
     args = parse_args()
     export_passive_breathing(args)
 

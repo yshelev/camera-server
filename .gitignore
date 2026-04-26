@@ -1,7 +1,7 @@
 .*venv
-.env
+.env*
 .idea
 hls
 /service-environments
 */__pycache__
-sample.mov
+*.mov

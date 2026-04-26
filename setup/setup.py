@@ -1,24 +1,32 @@
 import subprocess
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
+load_dotenv()
 current_dir = os.getcwd()
-ENV_FILE_NAME = 3
+
+DOCKER_NETWORK = os.getenv("NETWORK")
+ENV_FILES_NUM = 3
 SCRIPT_PATH = "service/worker.py"
 ENV_FILE_BASE = "service-environments/.env."
 DOCKER_IMAGE = "my-worker:latest"
 
-# build_cmd = ["docker", "build", "-t", DOCKER_IMAGE, "."]
-# build_result = subprocess.run(build_cmd, capture_output=True, text=True)
-# print(build_result)
-
+subprocess.run(
+    ["docker", "rm", "-f"] + [f"worker_{i}" for i in range(ENV_FILES_NUM)],
+    capture_output=True, 
+)
 output_containers = []
 
-for i in range(ENV_FILE_NAME):
+for i in range(ENV_FILES_NUM):
     env_file = ENV_FILE_BASE + str(i) 
+    container_name = f"worker_{i}"
+    
     cmd = [
         "docker", "run", 
         "-d", 
+        "--name", container_name, 
+        "--network", DOCKER_NETWORK, 
         "--env-file", env_file,
         "-v", f"{current_dir}:/app",
         "-w", "/app",

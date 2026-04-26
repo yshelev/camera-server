@@ -8,14 +8,18 @@ import os
 import asyncio
 from typing import Dict, Any
 import json
+from repositories.EventRepository import EventRepository
+from repositories.ZoneRepository import ZoneRepository
+from fastapi import Depends
 
-from models import (
-    MetricsData, 
-    AnomalyData, 
-    MetricData, 
-    ServiceZoneMetricsData, 
-    ServiceZoneData, 
-    ServiceSnapshotData
+from dependencies import (
+    get_event_repo,
+    get_zone_repo
+)
+from schemas import ( 
+    EventDataBase, 
+    CreateZonesSchema, 
+    EventSchemaBase
 )
 
 app = FastAPI()
@@ -45,31 +49,38 @@ class ConnectionManager:
                 pass
 
 manager = ConnectionManager()
-    
+
 @app.get("/")
 async def index():
     return FileResponse('templates/index.html')
 
-@app.post("/metrics")
-async def metrics(metrics_data: MetricsData):
-    await manager.broadcast({"type": "metrics", "data": metrics_data.data})
-    return {"status": "ok"}
-
-@app.post("/anomaly")
-async def anomaly(anomaly_data: AnomalyData):
-    await manager.broadcast({"type": "anomaly", "data": anomaly_data.data})
+@app.post("/create_zone")
+async def create_zones(zones: CreateZonesSchema, zone_repo: ZoneRepository = Depends(get_zone_repo)): 
+    zones = await zone_repo.create_many(zones)
     return {"status": "ok"}
 
 @app.post("/update_data")
-async def update_values(data: ServiceSnapshotData): 
+async def update_values(
+    data: EventDataBase,
+    zone_repo: ZoneRepository = Depends(get_zone_repo), 
+    event_repo: EventRepository = Depends(get_event_repo)
+): 
     service_id = data.service_id
-    print(service_id)
     for zone_data in data.zones: 
-        print(zone_data.roi_bbox_original)
-        print(zone_data.metrics.centroid_x)
-        print(zone_data.metrics.centroid_y)
-    
-    
+        zone_x, zone_y = zone_data.zone_key
+        bbox_lx, bbox_ty, bbox_rx, bbox_by = zone_data.roi_bbox_original
+        event_schema_base = EventSchemaBase(
+            left_x=bbox_lx,
+            right_x=bbox_rx,
+            top_y=bbox_ty,
+            bot_y=bbox_by,
+            worker_id=service_id, 
+            zone_x=zone_x, 
+            zone_y=zone_y
+        )
+        zone = await zone_repo.get_by_coords(service_id,  zone_x, zone_y)
+        await event_repo.create(event_schema_base, zone)
+        
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -77,20 +88,15 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            print(f"Received from client: {data}")
-            
-            if data == "ping":
-                await websocket.send_json({"type": "pong"})
                 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-        print("Client disconnected")
 
 if __name__ == "__main__": 
     uvicorn.run(
         "server:app",
-        host="127.0.0.1",
-        port=8080,
+        host="0.0.0.0",
+        port=8000,
         reload=True,
         log_level="info"
     )
